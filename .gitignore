@@ -1,0 +1,41 @@
+﻿__pycache__/
+*.py[cod]
+
+.vscode/
+.venv/
+env/
+
+# ============================================================
+# DATASETS GRANDES - NO SUBIR A GIT
+# ============================================================
+
+data/raw/*
+data/processed/*
+
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+
+# ============================================================
+# RESULTADOS
+# Se conservan TXT y CSV pequeños como evidencia del proyecto.
+# ============================================================
+
+results/*
+!results/**/*.txt
+!results/**/*.csv
+!results/*.txt
+!results/*.csv
+!results/**/.gitkeep
+
+
+# ============================================================
+# ARCHIVOS TEMPORALES
+# ============================================================
+
+project_tree.txt
+
+*.log
+*.tmp
+.DS_Store
+Thumbs.db

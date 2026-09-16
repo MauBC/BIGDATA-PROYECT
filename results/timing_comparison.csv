@@ -1,0 +1,5 @@
+motor,entorno,tiempo_segundos,fuente
+Polars,Laptop local,0.4246,results\polars_execution.txt
+Dask,Laptop local - Dask distribuido,13.3729,results\dask_execution.txt
+Modin,Laptop local - Modin + Ray,60.5717,results\modin_execution.txt
+Spark,Google Dataproc - Spark,76.32848876899993,results\spark
