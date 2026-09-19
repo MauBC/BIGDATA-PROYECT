@@ -39,3 +39,17 @@ project_tree.txt
 *.tmp
 .DS_Store
 Thumbs.db
+
+# ============================================================
+# EVIDENCIAS REPRODUCIBLES DEL PROYECTO
+# ============================================================
+
+# results/* ignora también los directorios hijos.
+# Se vuelven a habilitar los directorios y únicamente
+# evidencias pequeñas TXT/CSV.
+
+!results/*/
+!results/**/*.txt
+!results/**/*.csv
+!results/*.txt
+!results/*.csv

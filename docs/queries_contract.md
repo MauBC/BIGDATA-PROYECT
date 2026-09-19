@@ -115,3 +115,109 @@ Calcular:
 - total de ratings registrados
 
 Ordenar cronológicamente.
+
+---
+
+## Política determinista de ordenamiento
+
+Para garantizar resultados reproducibles entre Polars, Dask, Modin y Spark,
+todas las consultas deben utilizar un criterio de desempate explícito.
+
+### Q02 - Videojuegos por año
+
+Orden:
+
+1. `release_year` ascendente.
+
+### Q03 - Top géneros
+
+Orden:
+
+1. `videojuegos` descendente.
+2. `genres` ascendente.
+
+### Q04 - Top plataformas
+
+Orden:
+
+1. `videojuegos` descendente.
+2. `platforms` ascendente.
+
+### Q05 - Top desarrolladores
+
+Orden:
+
+1. `videojuegos` descendente.
+2. `developers` ascendente.
+
+### Q06 - Rating por género
+
+Orden:
+
+1. `rating_promedio` descendente.
+2. `genres` ascendente.
+
+### Q07 - Metacritic por género
+
+Orden:
+
+1. `metacritic_promedio` descendente.
+2. `genres` ascendente.
+
+### Q08 - Top videojuegos por cantidad de ratings
+
+Orden:
+
+1. `ratings_count` descendente.
+2. `id` ascendente.
+
+### Q09 - Playtime por género
+
+Orden:
+
+1. `playtime_promedio` descendente.
+2. `genres` ascendente.
+
+### Q10 - Evolución anual
+
+Orden:
+
+1. `release_year` ascendente.
+
+## Unidad de observación para dimensiones
+
+Para estadísticas por dimensiones como géneros, plataformas,
+desarrolladores o publishers:
+
+- los valores se separan por `|`;
+- se eliminan espacios laterales;
+- se eliminan elementos vacíos;
+- una pareja `id-dimensión` no debe aparecer más de una vez.
+
+Por ejemplo:
+
+`Action||RPG|`
+
+equivale a:
+
+`Action|RPG`
+
+y:
+
+`Action|Action`
+
+debe hacer que ese videojuego contribuya una sola vez a `Action`.
+
+## Comparación entre motores
+
+La comparación debe cumplir simultáneamente:
+
+1. mismas columnas;
+2. mismo número de filas;
+3. mismos valores;
+4. mismo orden;
+5. tolerancia absoluta máxima `0.0001` únicamente para columnas numéricas.
+
+Los textos literales `NULL`, `None` y `NaN` deben conservarse como texto
+cuando realmente forman parte del dato y no deben convertirse
+automáticamente en valores faltantes durante la comparación.

@@ -1,0 +1,11 @@
+query_id,consulta,filas_resultado,tiempo_segundos,archivo
+Q01,Resumen general y cobertura,1,2.825809,results\dask\q01_resumen_general.csv
+Q02,Videojuegos lanzados por año,66,2.536648,results\dask\q02_videojuegos_por_anio.csv
+Q03,Top 20 generos por cantidad de videojuegos,19,5.341154,results\dask\q03_top_generos.csv
+Q04,Top 20 plataformas por cantidad de videojuegos,20,1.873927,results\dask\q04_top_plataformas.csv
+Q05,Top 20 desarrolladores por cantidad de videojuegos,20,3.203475,results\dask\q05_top_desarrolladores.csv
+Q06,Rating promedio por genero,19,2.388306,results\dask\q06_rating_por_genero.csv
+Q07,Metacritic promedio por genero,19,3.662461,results\dask\q07_metacritic_por_genero.csv
+Q08,Top 20 videojuegos por cantidad de ratings,20,0.202615,results\dask\q08_top_videojuegos_ratings.csv
+Q09,Playtime promedio por genero,19,1.505289,results\dask\q09_playtime_por_genero.csv
+Q10,Evolucion anual de videojuegos y valoraciones,66,0.582444,results\dask\q10_evolucion_anual.csv

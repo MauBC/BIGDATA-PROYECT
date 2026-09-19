@@ -1,0 +1,11 @@
+query_id,consulta,filas_resultado,tiempo_segundos,archivo
+Q01,Resumen general y cobertura,1,0.033357,results\polars\q01_resumen_general.csv
+Q02,Videojuegos lanzados por año,66,0.026086,results\polars\q02_videojuegos_por_anio.csv
+Q03,Top 20 generos por cantidad de videojuegos,19,0.237966,results\polars\q03_top_generos.csv
+Q04,Top 20 plataformas por cantidad de videojuegos,20,0.304535,results\polars\q04_top_plataformas.csv
+Q05,Top 20 desarrolladores por cantidad de videojuegos,20,0.231907,results\polars\q05_top_desarrolladores.csv
+Q06,Rating promedio por genero,19,0.022311,results\polars\q06_rating_por_genero.csv
+Q07,Metacritic promedio por genero,19,0.015954,results\polars\q07_metacritic_por_genero.csv
+Q08,Top 20 videojuegos por cantidad de ratings,20,0.039177,results\polars\q08_top_videojuegos_ratings.csv
+Q09,Playtime promedio por genero,19,0.054265,results\polars\q09_playtime_por_genero.csv
+Q10,Evolucion anual de videojuegos y valoraciones,66,0.037593,results\polars\q10_evolucion_anual.csv

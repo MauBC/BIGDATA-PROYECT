@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import time
 
@@ -54,6 +54,9 @@ def explode_dimension(
         .filter(
             F.col(column).isNotNull()
             & (F.col(column) != "")
+        )
+        .dropDuplicates(
+            ["id", column]
         )
     )
 
@@ -441,7 +444,8 @@ def main() -> None:
         .orderBy(
             F.col(
                 "ratings_count"
-            ).desc()
+            ).desc(),
+            F.col("id").asc(),
         )
         .limit(20)
     )

@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 import sys
 import time
 
@@ -59,6 +59,14 @@ FLOAT_COLUMNS = [
 ]
 
 
+DIMENSION_COUNT_COLUMNS = {
+    "genres": "genres_count",
+    "platforms": "platforms_count",
+    "developers": "developers_count_clean",
+    "publishers": "publishers_count",
+}
+
+
 def normalized_string(column: str) -> pl.Expr:
     """
     Normaliza strings y convierte tokens que representan ausencia
@@ -80,6 +88,83 @@ def normalized_string(column: str) -> pl.Expr:
         .then(None)
         .otherwise(text)
         .alias(column)
+    )
+
+
+def normalized_dimension_list(
+    column: str,
+) -> pl.Expr:
+    """
+    Convierte una dimensión separada por | en una lista limpia.
+
+    Reglas:
+    - elimina espacios laterales;
+    - elimina elementos vacíos;
+    - elimina duplicados;
+    - conserva el orden original.
+    """
+
+    return (
+        pl.col(column)
+        .str.split("|")
+        .list.eval(
+            pl.when(
+                pl.element()
+                .str.strip_chars()
+                != ""
+            )
+            .then(
+                pl.element()
+                .str.strip_chars()
+            )
+            .otherwise(None)
+        )
+        .list.drop_nulls()
+        .list.unique(
+            maintain_order=True
+        )
+    )
+
+
+def normalized_dimension(
+    column: str,
+) -> pl.Expr:
+    values = normalized_dimension_list(
+        column
+    )
+
+    return (
+        pl.when(
+            pl.col(column).is_null()
+        )
+        .then(None)
+        .when(
+            values.list.len() == 0
+        )
+        .then(None)
+        .otherwise(
+            values.list.join("|")
+        )
+        .alias(column)
+    )
+
+
+def dimension_count(
+    column: str,
+    output_column: str,
+) -> pl.Expr:
+    return (
+        pl.when(
+            pl.col(column).is_null()
+        )
+        .then(0)
+        .otherwise(
+            pl.col(column)
+            .str.count_matches(r"\|")
+            + 1
+        )
+        .cast(pl.Int32)
+        .alias(output_column)
     )
 
 
@@ -164,6 +249,7 @@ def main() -> None:
             float_expressions.append(
                 pl.col(column)
                 .cast(pl.Float64, strict=False)
+                .fill_nan(None)
                 .alias(column)
             )
 
@@ -213,39 +299,29 @@ def main() -> None:
 
     print("[6/7] Creando variables derivadas...")
 
+    # Primero normalizamos las dimensiones.
+    #
+    # Ejemplos:
+    # Action||RPG|  -> Action|RPG
+    # Action|Action -> Action
+    #
+    # Después generamos los conteos sobre el valor ya limpio.
+
     df = df.with_columns(
         [
-            pl.when(pl.col("genres").is_null())
-            .then(0)
-            .otherwise(
-                pl.col("genres").str.count_matches(r"\|") + 1
-            )
-            .cast(pl.Int32)
-            .alias("genres_count"),
+            normalized_dimension(column)
+            for column in DIMENSION_COUNT_COLUMNS
+        ]
+    )
 
-            pl.when(pl.col("platforms").is_null())
-            .then(0)
-            .otherwise(
-                pl.col("platforms").str.count_matches(r"\|") + 1
+    df = df.with_columns(
+        [
+            dimension_count(
+                column,
+                output_column,
             )
-            .cast(pl.Int32)
-            .alias("platforms_count"),
-
-            pl.when(pl.col("developers").is_null())
-            .then(0)
-            .otherwise(
-                pl.col("developers").str.count_matches(r"\|") + 1
-            )
-            .cast(pl.Int32)
-            .alias("developers_count_clean"),
-
-            pl.when(pl.col("publishers").is_null())
-            .then(0)
-            .otherwise(
-                pl.col("publishers").str.count_matches(r"\|") + 1
-            )
-            .cast(pl.Int32)
-            .alias("publishers_count"),
+            for column, output_column
+            in DIMENSION_COUNT_COLUMNS.items()
         ]
     )
 

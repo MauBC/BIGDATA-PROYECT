@@ -1,0 +1,20 @@
+genres,juegos_con_playtime,playtime_promedio,playtime_mediano,playtime_maximo
+Sports,1648,8.5006,2.0,2630.0
+Massively Multiplayer,1155,7.6026,1.0,1473.0
+Board Games,217,6.6912,3.0,381.0
+RPG,6844,5.8986,3.0,1473.0
+Fighting,270,5.8296,3.0,239.0
+Card,165,5.2424,2.0,173.0
+Simulation,7252,4.9258,2.0,2630.0
+Strategy,7151,4.8985,2.0,766.0
+Family,242,4.8719,3.0,209.0
+Shooter,1225,4.6735,2.0,178.0
+Arcade,1172,4.6101,2.0,281.0
+Adventure,13144,4.3787,3.0,1260.0
+Puzzle,1313,4.2841,3.0,1046.0
+Racing,1361,4.0896,2.0,202.0
+Casual,10709,4.062,2.0,2630.0
+Platformer,624,4.0545,3.0,173.0
+Educational,183,3.9617,2.0,173.0
+Action,14840,3.8892,2.0,778.0
+Indie,20789,3.7684,2.0,2630.0
