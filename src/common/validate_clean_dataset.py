@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 import sys
 import time
 
@@ -24,6 +24,87 @@ def print_check(name: str, condition: bool, detail: str = "") -> bool:
         print(f"[{status}] {name}")
 
     return condition
+
+
+def normalized_dimension_list(
+    column: str,
+) -> pl.Expr:
+    return (
+        pl.col(column)
+        .str.split("|")
+        .list.eval(
+            pl.when(
+                pl.element()
+                .str.strip_chars()
+                != ""
+            )
+            .then(
+                pl.element()
+                .str.strip_chars()
+            )
+            .otherwise(None)
+        )
+        .list.drop_nulls()
+        .list.unique(
+            maintain_order=True
+        )
+    )
+
+
+def expected_dimension(
+    column: str,
+) -> pl.Expr:
+    values = normalized_dimension_list(
+        column
+    )
+
+    return (
+        pl.when(
+            pl.col(column).is_null()
+        )
+        .then(None)
+        .when(
+            values.list.len() == 0
+        )
+        .then(None)
+        .otherwise(
+            values.list.join("|")
+        )
+    )
+
+
+def expected_dimension_count(
+    column: str,
+) -> pl.Expr:
+    values = normalized_dimension_list(
+        column
+    )
+
+    return (
+        pl.when(
+            pl.col(column).is_null()
+        )
+        .then(0)
+        .otherwise(
+            values.list.len()
+        )
+        .cast(pl.Int32)
+    )
+
+
+def count_invalid(
+    df: pl.LazyFrame,
+    condition: pl.Expr,
+) -> int:
+    return (
+        df
+        .filter(
+            condition.fill_null(False)
+        )
+        .select(pl.len())
+        .collect()
+        .item()
+    )
 
 
 def main() -> None:
@@ -260,31 +341,33 @@ def main() -> None:
     print("5. COHERENCIA DE FECHAS")
     print("=" * 100)
 
-    invalid_release_year = (
-        df.filter(
-            (
-                pl.col("released").is_not_null()
-                & (
-                    pl.col("release_year")
-                    != pl.col("released").dt.year()
-                )
-            )
-            |
-            (
-                pl.col("released").is_null()
-                & pl.col("release_year").is_not_null()
-            )
+    invalid_release_year = count_invalid(
+        df,
+        (
+            pl.col("released").is_not_null()
+            & pl.col("release_year").is_null()
         )
-        .select(pl.len())
-        .collect()
-        .item()
+        |
+        (
+            pl.col("released").is_null()
+            & pl.col("release_year").is_not_null()
+        )
+        |
+        (
+            pl.col("released").is_not_null()
+            & pl.col("release_year").is_not_null()
+            & (
+                pl.col("release_year")
+                != pl.col("released").dt.year()
+            )
+        ),
     )
 
     checks.append(
         print_check(
             "released vs release_year",
             invalid_release_year == 0,
-            f"{invalid_release_year:,} inconsistencias"
+            f"{invalid_release_year:,} inconsistencias",
         )
     )
 
@@ -315,30 +398,66 @@ def main() -> None:
 
     for source_column, count_column in derived_rules.items():
 
-        expected_count = (
-            pl.when(pl.col(source_column).is_null())
-            .then(0)
-            .otherwise(
-                pl.col(source_column)
-                .str.count_matches(r"\|") + 1
-            )
-            .cast(pl.Int32)
+        normalized = expected_dimension(
+            source_column
         )
 
-        invalid_count = (
-            df.filter(
-                pl.col(count_column) != expected_count
+        expected_count = (
+            expected_dimension_count(
+                source_column
             )
-            .select(pl.len())
-            .collect()
-            .item()
+        )
+
+        invalid_structure = count_invalid(
+            df,
+            (
+                (
+                    pl.col(source_column).is_null()
+                    & normalized.is_not_null()
+                )
+                |
+                (
+                    pl.col(source_column).is_not_null()
+                    & normalized.is_null()
+                )
+                |
+                (
+                    pl.col(source_column).is_not_null()
+                    & normalized.is_not_null()
+                    & (
+                        pl.col(source_column)
+                        != normalized
+                    )
+                )
+            ),
+        )
+
+        checks.append(
+            print_check(
+                f"{source_column} normalizado",
+                invalid_structure == 0,
+                f"{invalid_structure:,} inconsistencias",
+            )
+        )
+
+        invalid_count = count_invalid(
+            df,
+            pl.col(count_column).is_null()
+            |
+            (
+                pl.col(count_column).is_not_null()
+                & (
+                    pl.col(count_column)
+                    != expected_count
+                )
+            ),
         )
 
         checks.append(
             print_check(
                 count_column,
                 invalid_count == 0,
-                f"{invalid_count:,} inconsistencias"
+                f"{invalid_count:,} inconsistencias",
             )
         )
 
@@ -363,6 +482,74 @@ def main() -> None:
     )
 
     print(numeric_summary)
+
+    invalid_rating = count_invalid(
+        df,
+        pl.col("rating").is_not_null()
+        & (
+            pl.col("rating")
+            .is_nan()
+            .fill_null(False)
+            |
+            pl.col("rating")
+            .is_infinite()
+            .fill_null(False)
+            |
+            (pl.col("rating") < 0)
+            |
+            (pl.col("rating") > 5)
+        ),
+    )
+
+    checks.append(
+        print_check(
+            "rating dentro de [0, 5]",
+            invalid_rating == 0,
+            f"{invalid_rating:,} valores invalidos",
+        )
+    )
+
+    invalid_metacritic = count_invalid(
+        df,
+        pl.col("metacritic").is_not_null()
+        & (
+            (pl.col("metacritic") < 0)
+            |
+            (pl.col("metacritic") > 100)
+        ),
+    )
+
+    checks.append(
+        print_check(
+            "metacritic dentro de [0, 100]",
+            invalid_metacritic == 0,
+            f"{invalid_metacritic:,} valores invalidos",
+        )
+    )
+
+    invalid_playtime = count_invalid(
+        df,
+        pl.col("playtime").is_not_null()
+        & (
+            pl.col("playtime")
+            .is_nan()
+            .fill_null(False)
+            |
+            pl.col("playtime")
+            .is_infinite()
+            .fill_null(False)
+            |
+            (pl.col("playtime") < 0)
+        ),
+    )
+
+    checks.append(
+        print_check(
+            "playtime finito y >= 0",
+            invalid_playtime == 0,
+            f"{invalid_playtime:,} valores invalidos",
+        )
+    )
 
     # ------------------------------------------------------------------
     # 8. NULLS PRINCIPALES

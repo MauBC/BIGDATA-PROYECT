@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 import sys
 import time
 
@@ -107,6 +107,7 @@ def main() -> None:
             print("[OK] DASK FUNCIONA CORRECTAMENTE")
         else:
             print("[ERROR] LOS RESULTADOS NO COINCIDEN")
+            raise SystemExit(1)
 
         print("=" * 100)
 

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import os
 import sys
@@ -52,6 +52,10 @@ def explode_dimension(
         work[column].notna()
         & (work[column] != "")
     ]
+
+    work = work.drop_duplicates(
+        subset=["id", column]
+    )
 
     return work
 
@@ -487,8 +491,8 @@ def main() -> None:
             ]
         ]
         .sort_values(
-            "ratings_count",
-            ascending=False,
+            ["ratings_count", "id"],
+            ascending=[False, True],
         )
         .head(20)
         .reset_index(drop=True)

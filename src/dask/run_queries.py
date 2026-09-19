@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 import sys
 import time
 
@@ -91,6 +91,10 @@ def explode_dimension(
         work[column].notnull()
         & (work[column] != "")
     ]
+
+    work = work.drop_duplicates(
+        subset=["id", column]
+    )
 
     return work
 
@@ -385,11 +389,14 @@ def q08(df: dd.DataFrame) -> tuple[pd.DataFrame, float]:
 
     result = (
         work
-        .nlargest(
-            20,
-            "ratings_count",
+        .sort_values(
+            ["ratings_count", "id"],
+            ascending=[False, True],
         )
-        .compute()
+        .head(
+            20,
+            npartitions=-1,
+        )
         .reset_index(drop=True)
     )
 

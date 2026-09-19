@@ -1,0 +1,21 @@
+id,name,release_year,rating,ratings_count,reviews_count,genres
+3498,Grand Theft Auto V,2013.0,4.47,7409.0,7544.0,Action
+3328,The Witcher 3: Wild Hunt,2015.0,4.64,7234.0,7354.0,Action|RPG
+4200,Portal 2,2011.0,4.58,6118.0,6175.0,Shooter|Puzzle
+28,Red Dead Redemption 2,2018.0,4.59,5525.0,5658.0,Action
+58175,God of War (2018),2018.0,4.54,5175.0,5283.0,Action
+13536,Portal,2007.0,4.49,5030.0,5075.0,Action|Puzzle
+5679,The Elder Scrolls V: Skyrim,2011.0,4.42,4933.0,4989.0,Action|RPG
+4062,BioShock Infinite,2013.0,4.38,4174.0,4216.0,Action|Shooter
+13537,Half-Life 2,2004.0,4.48,4108.0,4136.0,Action|Shooter
+5286,Tomb Raider,2013.0,4.06,4103.0,4136.0,Action
+416,Grand Theft Auto: San Andreas,2004.0,4.5,4082.0,4111.0,Action
+278,Horizon Zero Dawn,2017.0,4.27,3778.0,3828.0,Action|RPG
+3439,Life is Strange,2015.0,4.12,3776.0,3824.0,Adventure
+2462,Uncharted 4: A Thiefs End,2016.0,4.48,3752.0,3790.0,Action|Shooter
+58134,Marvels Spider-Man,2018.0,4.45,3727.0,3801.0,Action
+4291,Counter-Strike: Global Offensive,2012.0,3.57,3638.0,3675.0,Shooter
+2454,DOOM (2016),2016.0,4.38,3634.0,3675.0,Action|Shooter
+3070,Fallout 4,2015.0,3.81,3437.0,3474.0,Action|RPG
+12020,Left 4 Dead 2,2009.0,4.1,3408.0,3435.0,Action|Shooter
+1030,Limbo,2010.0,4.14,3404.0,3447.0,Action|Adventure|Indie|Puzzle|Platformer

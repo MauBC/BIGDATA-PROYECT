@@ -1,295 +1,564 @@
 ﻿from __future__ import annotations
 
 from pathlib import Path
-import math
 import sys
 
+import numpy as np
 import pandas as pd
 
 
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
+RESULTS = Path("results")
 
+ENGINES = (
+    "polars",
+    "dask",
+    "spark",
+    "modin",
+)
 
-BASE = Path("results")
-
-DIRECTORIES = {
-    "Polars": BASE / "polars",
-    "Dask": BASE / "dask",
-    "Spark": BASE / "spark",
-    "Modin": BASE / "modin",
-}
-
-FILES = [
-    "q01_resumen_general.csv",
-    "q02_videojuegos_por_anio.csv",
-    "q03_top_generos.csv",
-    "q04_top_plataformas.csv",
-    "q05_top_desarrolladores.csv",
-    "q06_rating_por_genero.csv",
-    "q07_metacritic_por_genero.csv",
-    "q08_top_videojuegos_ratings.csv",
-    "q09_playtime_por_genero.csv",
-    "q10_evolucion_anual.csv",
-]
+REFERENCE = "polars"
 
 TOLERANCE = 0.0001
 
+QUERIES = tuple(
+    f"q{i:02d}"
+    for i in range(1, 11)
+)
 
-def normalize_missing(value):
-    if pd.isna(value):
+
+def find_query_file(
+    engine: str,
+    query: str,
+) -> Path:
+    directory = RESULTS / engine
+
+    matches = sorted(
+        directory.glob(
+            f"{query}_*.csv"
+        )
+    )
+
+    if len(matches) == 0:
+        raise FileNotFoundError(
+            f"No se encontró {query} "
+            f"para {engine} en "
+            f"{directory}"
+        )
+
+    if len(matches) > 1:
+        names = ", ".join(
+            str(path)
+            for path in matches
+        )
+
+        raise RuntimeError(
+            f"Hay múltiples archivos para "
+            f"{engine}/{query}: {names}"
+        )
+
+    return matches[0]
+
+
+def read_result(
+    path: Path,
+) -> pd.DataFrame:
+    """
+    Conserva literales como:
+    NULL
+    None
+    NaN
+
+    Solo una celda realmente vacía
+    se interpreta como faltante.
+    """
+
+    return pd.read_csv(
+        path,
+        keep_default_na=False,
+        na_values=[""],
+    )
+
+
+def normalized_numeric(
+    series: pd.Series,
+):
+    """
+    Devuelve una Serie numérica cuando
+    todos los valores no nulos se pueden
+    interpretar como números.
+
+    En caso contrario devuelve None.
+    """
+
+    if pd.api.types.is_numeric_dtype(
+        series
+    ):
+        return pd.to_numeric(
+            series,
+            errors="coerce",
+        )
+
+    non_null = (
+        series
+        .dropna()
+    )
+
+    if non_null.empty:
         return None
-    return value
+
+    converted = pd.to_numeric(
+        non_null,
+        errors="coerce",
+    )
+
+    if converted.notna().all():
+        return pd.to_numeric(
+            series,
+            errors="coerce",
+        )
+
+    return None
 
 
-def compare_frames(reference, candidate):
+def compare_numeric(
+    left: pd.Series,
+    right: pd.Series,
+):
+    left_num = normalized_numeric(left)
+    right_num = normalized_numeric(right)
 
-    if list(reference.columns) != list(candidate.columns):
-        return False, {
-            "motivo": "COLUMNAS DIFERENTES",
-            "referencia": list(reference.columns),
-            "candidato": list(candidate.columns),
-        }
+    if (
+        left_num is None
+        or right_num is None
+    ):
+        return None
 
-    if len(reference) != len(candidate):
-        return False, {
-            "motivo": "NUMERO DE FILAS DIFERENTE",
-            "referencia": len(reference),
-            "candidato": len(candidate),
-        }
+    left_values = (
+        left_num
+        .astype(float)
+        .to_numpy()
+    )
 
-    reference = reference.copy()
-    candidate = candidate.copy()
+    right_values = (
+        right_num
+        .astype(float)
+        .to_numpy()
+    )
 
-    sort_columns = list(reference.columns)
+    equal = np.isclose(
+        left_values,
+        right_values,
+        rtol=0.0,
+        atol=TOLERANCE,
+        equal_nan=True,
+    )
 
-    reference = (
-        reference
-        .sort_values(
-            sort_columns,
+    return equal
+
+
+def compare_text(
+    left: pd.Series,
+    right: pd.Series,
+):
+    left_missing = left.isna()
+    right_missing = right.isna()
+
+    both_missing = (
+        left_missing
+        & right_missing
+    )
+
+    one_missing = (
+        left_missing
+        ^ right_missing
+    )
+
+    equal = (
+        left.astype("string")
+        == right.astype("string")
+    ).fillna(False)
+
+    result = (
+        both_missing
+        | (
+            (~one_missing)
+            & equal
+        )
+    )
+
+    return result.to_numpy()
+
+
+def compare_dataframes(
+    expected: pd.DataFrame,
+    actual: pd.DataFrame,
+):
+    problems = []
+
+    if list(expected.columns) != list(
+        actual.columns
+    ):
+        problems.append(
+            "Columnas diferentes. "
+            f"Esperado={list(expected.columns)}; "
+            f"actual={list(actual.columns)}"
+        )
+
+        return problems
+
+    if len(expected) != len(actual):
+        problems.append(
+            "Cantidad de filas diferente. "
+            f"Esperado={len(expected)}; "
+            f"actual={len(actual)}"
+        )
+
+        return problems
+
+    for column in expected.columns:
+        left = expected[column]
+        right = actual[column]
+
+        numeric_equal = compare_numeric(
+            left,
+            right,
+        )
+
+        if numeric_equal is not None:
+            equal = numeric_equal
+        else:
+            equal = compare_text(
+                left,
+                right,
+            )
+
+        invalid = np.flatnonzero(
+            ~equal
+        )
+
+        if len(invalid) == 0:
+            continue
+
+        row = int(
+            invalid[0]
+        )
+
+        problems.append(
+            f"Columna '{column}', "
+            f"fila {row}: "
+            f"esperado={left.iloc[row]!r}; "
+            f"actual={right.iloc[row]!r}"
+        )
+
+    return problems
+
+
+def check_ascending(
+    df: pd.DataFrame,
+    columns,
+):
+    ordered = (
+        df.sort_values(
+            list(columns),
+            ascending=True,
+            kind="stable",
             na_position="last",
         )
         .reset_index(drop=True)
     )
 
-    candidate = (
-        candidate
-        .sort_values(
-            sort_columns,
+    return df.reset_index(
+        drop=True
+    ).equals(ordered)
+
+
+def check_rank_order(
+    df: pd.DataFrame,
+    metric: str,
+    dimension: str,
+):
+    expected = (
+        df.sort_values(
+            [metric, dimension],
+            ascending=[False, True],
+            kind="stable",
             na_position="last",
         )
         .reset_index(drop=True)
     )
 
-    differences = []
+    return (
+        df.reset_index(drop=True)
+        .equals(expected)
+    )
 
-    for column in reference.columns:
 
-        for index in range(len(reference)):
+def validate_contract(
+    query: str,
+    df: pd.DataFrame,
+):
+    """
+    Valida el orden contractual sin
+    modificar el DataFrame.
+    """
 
-            a = normalize_missing(
-                reference.iloc[index][column]
+    try:
+        if query == "q02":
+            ok = check_ascending(
+                df,
+                ["release_year"],
             )
 
-            b = normalize_missing(
-                candidate.iloc[index][column]
+        elif query == "q03":
+            ok = check_rank_order(
+                df,
+                "videojuegos",
+                "genres",
             )
 
-            if a is None and b is None:
-                continue
-
-            numeric_ok = False
-
-            try:
-                av = float(a)
-                bv = float(b)
-
-                if math.isclose(
-                    av,
-                    bv,
-                    rel_tol=0.0,
-                    abs_tol=TOLERANCE,
-                ):
-                    numeric_ok = True
-            except (TypeError, ValueError):
-                pass
-
-            if numeric_ok:
-                continue
-
-            if str(a).strip() == str(b).strip():
-                continue
-
-            differences.append(
-                {
-                    "fila": index,
-                    "columna": column,
-                    "referencia": a,
-                    "candidato": b,
-                }
+        elif query == "q04":
+            ok = check_rank_order(
+                df,
+                "videojuegos",
+                "platforms",
             )
 
-            if len(differences) >= 10:
-                return False, differences
+        elif query == "q05":
+            ok = check_rank_order(
+                df,
+                "videojuegos",
+                "developers",
+            )
 
-    if differences:
-        return False, differences
+        elif query == "q06":
+            ok = check_rank_order(
+                df,
+                "rating_promedio",
+                "genres",
+            )
 
-    return True, None
+        elif query == "q07":
+            ok = check_rank_order(
+                df,
+                "metacritic_promedio",
+                "genres",
+            )
+
+        elif query == "q08":
+            expected = (
+                df.sort_values(
+                    [
+                        "ratings_count",
+                        "id",
+                    ],
+                    ascending=[
+                        False,
+                        True,
+                    ],
+                    kind="stable",
+                    na_position="last",
+                )
+                .reset_index(drop=True)
+            )
+
+            ok = (
+                df.reset_index(drop=True)
+                .equals(expected)
+            )
+
+        elif query == "q09":
+            ok = check_rank_order(
+                df,
+                "playtime_promedio",
+                "genres",
+            )
+
+        elif query == "q10":
+            ok = check_ascending(
+                df,
+                ["release_year"],
+            )
+
+        else:
+            ok = True
+
+    except KeyError as exc:
+        return (
+            False,
+            f"Falta columna contractual: {exc}",
+        )
+
+    if not ok:
+        return (
+            False,
+            "El resultado no respeta "
+            "el orden definido en el contrato.",
+        )
+
+    return (
+        True,
+        None,
+    )
 
 
 def main():
-
-    print("=" * 115)
+    print("=" * 110)
     print(
-        "VALIDACION FINAL - "
-        "POLARS VS DASK VS SPARK VS MODIN"
+        "COMPARACION ESTRICTA "
+        "POLARS / DASK / SPARK / MODIN"
     )
-    print("=" * 115)
+    print("=" * 110)
 
     totals = {
-        "Dask": 0,
-        "Spark": 0,
-        "Modin": 0,
+        engine: 0
+        for engine in ENGINES
+        if engine != REFERENCE
     }
 
-    errors = {
-        "Dask": 0,
-        "Spark": 0,
-        "Modin": 0,
-    }
+    failures = []
 
-    for number, filename in enumerate(
-        FILES,
-        start=1,
-    ):
-
+    for query in QUERIES:
         print()
-        print(
-            f"Q{number:02d} - {filename}"
+        print("-" * 110)
+        print(query.upper())
+        print("-" * 110)
+
+        reference_path = find_query_file(
+            REFERENCE,
+            query,
         )
-        print("-" * 115)
 
-        reference = pd.read_csv(
-            DIRECTORIES["Polars"] / filename
+        reference_df = read_result(
+            reference_path
         )
 
-        for engine in [
-            "Dask",
-            "Spark",
-            "Modin",
-        ]:
-
-            candidate = pd.read_csv(
-                DIRECTORIES[engine] / filename
+        contract_ok, reason = (
+            validate_contract(
+                query,
+                reference_df,
             )
+        )
 
-            ok, details = compare_frames(
-                reference,
-                candidate,
-            )
-
-            status = (
-                "[OK]"
-                if ok
-                else "[ERROR]"
-            )
-
+        if contract_ok:
             print(
-                f"Polars vs {engine:<5}: "
-                f"{status}"
+                f"{REFERENCE:<8} contrato : [OK]"
+            )
+        else:
+            print(
+                f"{REFERENCE:<8} contrato : "
+                f"[ERROR] {reason}"
             )
 
-            if ok:
+            failures.append(
+                f"{query}/{REFERENCE}: "
+                f"{reason}"
+            )
+
+        for engine in ENGINES:
+            if engine == REFERENCE:
+                continue
+
+            path = find_query_file(
+                engine,
+                query,
+            )
+
+            df = read_result(path)
+
+            engine_contract_ok, (
+                engine_contract_reason
+            ) = validate_contract(
+                query,
+                df,
+            )
+
+            problems = compare_dataframes(
+                reference_df,
+                df,
+            )
+
+            equivalent = (
+                not problems
+                and contract_ok
+                and engine_contract_ok
+            )
+
+            if equivalent:
                 totals[engine] += 1
-            else:
-                errors[engine] += 1
 
                 print(
-                    f"  Diferencias detectadas "
-                    f"en {engine}:"
+                    f"Polars vs "
+                    f"{engine.capitalize():<7}: "
+                    "[OK]"
                 )
 
-                if isinstance(
-                    details,
-                    list,
-                ):
-                    for diff in details:
-                        print(
-                            "  "
-                            f"fila={diff['fila']} "
-                            f"columna={diff['columna']} "
-                            f"Polars={diff['referencia']} "
-                            f"{engine}={diff['candidato']}"
-                        )
-                else:
+            else:
+                print(
+                    f"Polars vs "
+                    f"{engine.capitalize():<7}: "
+                    "[ERROR]"
+                )
+
+                if not engine_contract_ok:
                     print(
-                        f"  {details}"
+                        "  Contrato: "
+                        f"{engine_contract_reason}"
+                    )
+
+                    failures.append(
+                        f"{query}/{engine}: "
+                        f"{engine_contract_reason}"
+                    )
+
+                for problem in problems[:5]:
+                    print(
+                        f"  {problem}"
+                    )
+
+                    failures.append(
+                        f"{query}/"
+                        f"{engine}: "
+                        f"{problem}"
                     )
 
     print()
-    print("=" * 115)
+    print("=" * 110)
     print("RESUMEN FINAL")
-    print("=" * 115)
+    print("=" * 110)
 
-    for engine in [
-        "Dask",
-        "Spark",
-        "Modin",
-    ]:
+    for engine, passed in totals.items():
         print(
-            f"{engine:<5} equivalentes : "
-            f"{totals[engine]}/10"
-        )
-
-        print(
-            f"{engine:<5} diferentes   : "
-            f"{errors[engine]}/10"
+            f"{engine.capitalize():<8}: "
+            f"{passed}/10 equivalentes"
         )
 
     print()
-    print(
-        f"Tolerancia numerica: "
-        f"{TOLERANCE}"
-    )
 
-    total_errors = sum(
-        errors.values()
-    )
-
-    if total_errors == 0:
-
-        print()
+    if not failures and all(
+        value == 10
+        for value in totals.values()
+    ):
         print(
             "[OK] LOS CUATRO MOTORES "
-            "PRODUCEN RESULTADOS EQUIVALENTES"
+            "PRODUCEN RESULTADOS "
+            "EQUIVALENTES Y RESPETAN "
+            "EL ORDEN CONTRACTUAL"
         )
 
-        print(
-            "[OK] POLARS 10/10"
-        )
+        raise SystemExit(0)
 
-        print(
-            "[OK] DASK   10/10"
-        )
+    print(
+        "[ERROR] EXISTEN DIFERENCIAS "
+        "O INCUMPLIMIENTOS DEL CONTRATO"
+    )
 
-        print(
-            "[OK] SPARK  10/10"
-        )
+    print()
+    print(
+        f"Incidencias: "
+        f"{len(failures)}"
+    )
 
-        print(
-            "[OK] MODIN  10/10"
-        )
-
-    else:
-
-        print()
-        print(
-            "[REVISAR] EXISTEN DIFERENCIAS "
-            "ENTRE LOS MOTORES"
-        )
-
-        sys.exit(1)
+    raise SystemExit(1)
 
 
 if __name__ == "__main__":

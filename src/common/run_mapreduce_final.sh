@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 set -euo pipefail
 
 JAR="/usr/lib/hadoop-mapreduce/hadoop-mapreduce-examples.jar"
@@ -51,7 +51,7 @@ END=$(date +%s)
 echo "Tiempo WORDMEDIAN: $((END - START)) segundos"
 echo
 echo "Primeras frecuencias:"
-hdfs dfs -cat "$BASE/wordmedian/part-r-00000" | head -n 20
+hdfs dfs -cat "$BASE/wordmedian/part-r-00000" | sed -n '1,20p'
 
 echo
 echo "============================================================"

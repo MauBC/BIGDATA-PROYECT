@@ -1,0 +1,11 @@
+archivo,consulta,filas_resultado,query_id,tiempo_segundos
+gs://rawg-bigdata-86233853262/results/spark/q01_resumen_general,Resumen general y cobertura,1,Q01,26.704902590000074
+gs://rawg-bigdata-86233853262/results/spark/q02_videojuegos_por_anio,Videojuegos lanzados por año,66,Q02,18.40457990599998
+gs://rawg-bigdata-86233853262/results/spark/q03_top_generos,Top 20 generos por cantidad de videojuegos,19,Q03,10.164208477999978
+gs://rawg-bigdata-86233853262/results/spark/q04_top_plataformas,Top 20 plataformas por cantidad de videojuegos,20,Q04,6.742593931999977
+gs://rawg-bigdata-86233853262/results/spark/q05_top_desarrolladores,Top 20 desarrolladores por cantidad de videojuegos,20,Q05,9.807586269000012
+gs://rawg-bigdata-86233853262/results/spark/q06_rating_por_genero,Rating promedio por genero,19,Q06,15.155558116000066
+gs://rawg-bigdata-86233853262/results/spark/q07_metacritic_por_genero,Metacritic promedio por genero,19,Q07,8.672459638999953
+gs://rawg-bigdata-86233853262/results/spark/q08_top_videojuegos_ratings,Top 20 videojuegos por cantidad de ratings,20,Q08,2.8496494019999545
+gs://rawg-bigdata-86233853262/results/spark/q09_playtime_por_genero,Playtime promedio por genero,19,Q09,9.913625515000035
+gs://rawg-bigdata-86233853262/results/spark/q10_evolucion_anual,Evolucion anual de videojuegos y valoraciones,66,Q10,9.623904523000078

@@ -1192,3 +1192,57 @@ La validación final debe terminar con:
 ```
 
 Esto confirma que las diferentes implementaciones realizan las mismas operaciones analíticas sobre el mismo dataset.
+
+## Validacion final de revision
+
+El 18 de septiembre de 2026 se realizo una revision adicional del pipeline RAWG para reforzar reproducibilidad, validacion y consistencia entre motores.
+
+### Mejoras aplicadas
+
+- Los valores `NaN` numericos se convierten a `NULL` durante la limpieza.
+- Los valores literales `NULL`, `None` y `NaN` en `name` y `slug` se preservan como texto.
+- Las dimensiones multivalor se normalizan eliminando espacios, elementos vacios y valores repetidos.
+- Los conteos derivados de generos, plataformas, desarrolladores y publishers se calculan sobre la dimension normalizada.
+- El validador comprueba explicitamente la coherencia `released` / `release_year`.
+- Se validan los rangos de `rating`, `metacritic` y `playtime`.
+- Los rankings usan criterios de desempate deterministas.
+- Las parejas `id-dimension` repetidas no contribuyen mas de una vez a las estadisticas.
+- El comparador preserva textos literales, aplica tolerancia `0.0001` solo a valores numericos y valida tambien el orden contractual.
+- El smoke test de Dask devuelve codigo de error cuando una comprobacion falla.
+- El script Hadoop evita el riesgo de `SIGPIPE` provocado por `head` bajo `pipefail`.
+
+### Resultado final
+
+El dataset procesado conserva:
+
+- 899,585 registros.
+- 60 columnas.
+- 899,585 IDs unicos.
+- 0 problemas estructurales en la auditoria final.
+- 0 inconsistencias en las dimensiones derivadas.
+- 0 valores de `rating` fuera del rango permitido.
+- 0 inconsistencias entre `released` y `release_year`.
+
+Las diez consultas oficiales se volvieron a validar con Polars, Dask, Modin y Spark.
+
+Resultado del comparador final:
+
+- Dask: 10/10 equivalentes.
+- Spark: 10/10 equivalentes.
+- Modin: 10/10 equivalentes.
+- Orden contractual: correcto.
+- Tolerancia numerica: 0.0001.
+
+La ejecucion final de Spark se realizo en Google Dataproc mediante el job:
+
+`9f9d25248f214fae8164c6d8d7c1d837`
+
+El job finalizo con estado `DONE`.
+
+El Parquet revisado tiene SHA256 local:
+
+`32D1854BD378ECF67687D3A917264893D031AE701D499BDB298255F7D87C142E`
+
+El archivo subido a Google Cloud Storage fue verificado mediante CRC32C antes de la ejecucion de Spark.
+
+BigQuery no forma parte del pipeline RAWG y no se modificaron recursos de BigQuery durante este proyecto.

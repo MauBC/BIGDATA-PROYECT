@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 import sys
 import time
 
@@ -77,6 +77,10 @@ def explode_dimension(
         .filter(
             pl.col(column).is_not_null()
             & (pl.col(column) != "")
+        )
+        .unique(
+            subset=["id", column],
+            maintain_order=True,
         )
     )
 
@@ -165,8 +169,8 @@ def main() -> None:
             .alias("videojuegos")
         )
         .sort(
-            "videojuegos",
-            descending=True,
+            ["videojuegos", "genres"],
+            descending=[True, False],
         )
         .head(20)
     )
@@ -198,8 +202,8 @@ def main() -> None:
             .alias("videojuegos")
         )
         .sort(
-            "videojuegos",
-            descending=True,
+            ["videojuegos", "platforms"],
+            descending=[True, False],
         )
         .head(20)
     )
@@ -231,8 +235,8 @@ def main() -> None:
             .alias("videojuegos")
         )
         .sort(
-            "videojuegos",
-            descending=True,
+            ["videojuegos", "developers"],
+            descending=[True, False],
         )
         .head(20)
     )
@@ -293,8 +297,8 @@ def main() -> None:
             pl.col("juegos_con_rating") >= 50
         )
         .sort(
-            "rating_promedio",
-            descending=True,
+            ["rating_promedio", "genres"],
+            descending=[True, False],
         )
         .head(20)
     )
@@ -354,8 +358,8 @@ def main() -> None:
             pl.col("juegos_con_metacritic") >= 20
         )
         .sort(
-            "metacritic_promedio",
-            descending=True,
+            ["metacritic_promedio", "genres"],
+            descending=[True, False],
         )
         .head(20)
     )
@@ -388,8 +392,8 @@ def main() -> None:
             "genres",
         )
         .sort(
-            "ratings_count",
-            descending=True,
+            ["ratings_count", "id"],
+            descending=[True, False],
         )
         .head(20)
     )
@@ -454,8 +458,8 @@ def main() -> None:
             pl.col("juegos_con_playtime") >= 30
         )
         .sort(
-            "playtime_promedio",
-            descending=True,
+            ["playtime_promedio", "genres"],
+            descending=[True, False],
         )
         .head(20)
     )

@@ -1,0 +1,11 @@
+query_id,consulta,filas_resultado,tiempo_segundos,archivo
+Q01,Resumen general y cobertura,1,10.030675300004077,results\modin\q01_resumen_general.csv
+Q02,Videojuegos lanzados por año,66,12.101858000009088,results\modin\q02_videojuegos_por_anio.csv
+Q03,Top 20 generos por cantidad de videojuegos,19,6.917780399991898,results\modin\q03_top_generos.csv
+Q04,Top 20 plataformas por cantidad de videojuegos,20,4.979202999995323,results\modin\q04_top_plataformas.csv
+Q05,Top 20 desarrolladores por cantidad de videojuegos,20,5.783777200005716,results\modin\q05_top_desarrolladores.csv
+Q06,Rating promedio por genero,19,4.9398428999993484,results\modin\q06_rating_por_genero.csv
+Q07,Metacritic promedio por genero,19,4.0423831999942195,results\modin\q07_metacritic_por_genero.csv
+Q08,Top 20 videojuegos por cantidad de ratings,20,3.38277919999382,results\modin\q08_top_videojuegos_ratings.csv
+Q09,Playtime promedio por genero,19,4.674882400009665,results\modin\q09_playtime_por_genero.csv
+Q10,Evolucion anual de videojuegos y valoraciones,66,26.893210599999293,results\modin\q10_evolucion_anual.csv
