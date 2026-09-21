@@ -517,10 +517,10 @@ Los resultados quedan en:
 results/polars/
 ```
 
-Tiempo observado durante el desarrollo:
+Tiempo observado en la revisión final:
 
 ```text
-~0.4246 segundos
+1.0032 segundos
 ```
 
 para Q01-Q10.
@@ -557,10 +557,10 @@ Resultados:
 results/dask/
 ```
 
-Tiempo observado:
+Tiempo observado en la revisión final:
 
 ```text
-~13.3729 segundos
+24.1221 segundos
 ```
 
 ---
@@ -630,17 +630,17 @@ Resultados:
 results/modin/
 ```
 
-Tiempo observado:
+Tiempo observado en la revisión final:
 
 ```text
 Carga dataset:
-33.1377 s
+80.2687 s
 
 Q01-Q10:
-60.5717 s
+83.7464 s
 
 Carga + consultas:
-93.7094 s
+164.0151 s
 ```
 
 ---
@@ -764,11 +764,11 @@ Los resultados se escriben en:
 gs://rawg-bigdata-86233853262/results/spark/
 ```
 
-Durante la ejecución final:
+Durante la ejecución revisada final en Dataproc:
 
 ```text
 Tiempo total Q01-Q10:
-76.3285 segundos
+118.0391 segundos
 ```
 
 ---
@@ -939,14 +939,14 @@ El resultado se guarda en:
 results/timing_comparison.csv
 ```
 
-Resultados observados durante el proyecto:
+Resultados observados en la revisión final (Q01-Q10):
 
 | Motor | Entorno | Tiempo Q01-Q10 |
 |---|---|---:|
-| Polars | Laptop | ~0.4246 s |
-| Dask | Laptop / 4 workers | ~13.3729 s |
-| Modin + Ray | Laptop | ~60.5717 s |
-| Spark | Dataproc / 1 master + 2 workers | ~76.3285 s |
+| Polars | Local (Lazy API) | 1.0032 s |
+| Dask | Local / 4 workers, 11 particiones | 24.1221 s |
+| Modin + Ray | Local / entorno separado (consultas puras) | 83.7464 s |
+| Spark | Dataproc / 1 master + 2 workers | 118.0391 s |
 
 ## Advertencia
 
