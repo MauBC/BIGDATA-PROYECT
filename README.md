@@ -1246,3 +1246,8 @@ El Parquet revisado tiene SHA256 local:
 El archivo subido a Google Cloud Storage fue verificado mediante CRC32C antes de la ejecucion de Spark.
 
 BigQuery no forma parte del pipeline RAWG y no se modificaron recursos de BigQuery durante este proyecto.
+
+
+## CRUD de registros
+
+Demostracion con Polars en Cloud Shell sobre 1000 filas. Consulta [la documentacion y evidencias del CRUD](docs/crud.md).
