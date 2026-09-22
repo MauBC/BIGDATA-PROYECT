@@ -1,0 +1,6 @@
+etapa,filas,id_prueba,coincidencias
+00_antes,1000,1018371,0
+01_create,1001,1018371,1
+02_read,1001,1018371,1
+03_update,1001,1018371,1
+04_delete,1000,1018371,0

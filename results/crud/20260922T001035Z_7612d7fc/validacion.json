@@ -1,0 +1,16 @@
+{
+  "estado": "OK",
+  "fecha_utc": "20260922T001035Z_7612d7fc",
+  "python": "3.12.3",
+  "polars": "1.44.2",
+  "entrada_local": "/home/leonardohc_bigdata/rawg_crud_leonardo/videogames_clean.parquet",
+  "filas_muestra": 1000,
+  "columnas": 60,
+  "id_prueba": 1018371,
+  "sha256_antes": "32d1854bd378ecf67687d3a917264893d031ae701d499bdb298255f7d87c142e",
+  "sha256_despues": "32d1854bd378ecf67687d3a917264893d031ae701d499bdb298255f7d87c142e",
+  "entrada_sin_cambios": true,
+  "muestra_final_igual_inicial": true,
+  "alcance": "CRUD local con Polars; no es una ejecución distribuida",
+  "registro_sintetico": "Solo id, slug, name y rating; resto null"
+}
